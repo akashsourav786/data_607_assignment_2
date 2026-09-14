@@ -1,0 +1,174 @@
+---
+title: "Assignment 2B DATA 607"
+format: html
+editor: visual
+---
+
+## Approach 2B
+
+For this assignment, I plan to use the provided penguin prediction dataset to evaluate a binary classification model. I will calculate the null error rate and compare the model at probability thresholds of 0.2, 0.5, and 0.8 using confusion matrices and performance metrics such as accuracy, precision, recall, and F1 score. I will use the provided reading, online resources, and LLM tools to explore appropriate methods in R and better understand how changing the threshold affects model performance.
+
+## Data Exploration
+
+Load the data and explore structure.
+
+```{r}
+penguins <- read.csv(
+  "https://raw.githubusercontent.com/acatlin/data/refs/heads/master/penguin_predictions.csv"
+)
+
+head(penguins)
+```
+
+## Null Error Rate
+
+Before evaluating the model, I first examined the distribution of the actual classes.
+
+```{r}
+table(penguins$sex)
+```
+
+```{r}
+39/93
+
+```
+
+Make Null error rate reproducible
+
+```{r}
+class_counts <- table(penguins$sex)
+
+null_error_rate <- min(class_counts) / sum(class_counts)
+
+null_error_rate
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(penguins, aes(x = sex)) +
+  geom_bar() +
+  labs(
+    title = "Distribution of Actual Penguin Sex",
+    x = "Sex",
+    y = "Count"
+  )
+```
+
+## Confusion Matrices at Multiple Thresholds
+
+I will now be exploring how the prediction model change depending on the change in prediction threshold. Based on that, we can create True Positive (TP), False Positives (FP), True Negatives (TN), False Negatives (FN).
+
+```{r}
+head(penguins$.pred_female, 10)
+
+penguins$pred_02 <- ifelse(penguins$.pred_female > 0.2, "female", "male")
+
+penguins$pred_05 <- ifelse(penguins$.pred_female > 0.5, "female", "male")
+
+penguins$pred_08 <- ifelse(penguins$.pred_female > 0.8, "female", "male")
+```
+
+Lets inspect what happened in more detail
+
+```{r}
+head(
+  penguins[, c("sex", ".pred_female", "pred_02", "pred_05", "pred_08")],
+  10
+)
+```
+
+Now let's build a standard confusion matrix
+
+```{r}
+table(
+  Predicted = penguins$pred_02,
+  Actual = penguins$sex
+)
+
+table(
+  Predicted = penguins$pred_05,
+  Actual = penguins$sex
+)
+
+table(
+  Predicted = penguins$pred_08,
+  Actual = penguins$sex
+)
+```
+
+Calculation example for 0.2 threshold:
+
+TP = 37 FP = 6 TN = 48 FN = 2
+
+37 + 6 + 48 + 2 = 93 total number checks out
+
+## Performance Metrics
+
+```{r}
+TP <- 37
+FP <- 6
+TN <- 48
+FN <- 2
+
+accuracy <- (TP + TN) / (TP + FP + TN + FN)
+
+precision <- TP / (TP + FP)
+
+recall <- TP / (TP + FN)
+
+f1 <- 2 * (precision * recall) / (precision + recall)
+
+accuracy
+precision
+recall
+f1
+```
+
+First lets organize the metrics for all three thresholds for easier data manupulation
+
+```{r}
+metrics <- data.frame(
+  threshold = c(0.2, 0.5, 0.8),
+  TP = c(37, 36, 36),
+  FP = c(6, 3, 2),
+  TN = c(48, 51, 52),
+  FN = c(2, 3, 3)
+)
+
+metrics
+```
+
+Now I will calculate all three threshold performance metrics using the existing function created
+
+```{r}
+metrics$accuracy <- (metrics$TP + metrics$TN) /
+  (metrics$TP + metrics$FP + metrics$TN + metrics$FN)
+
+metrics$precision <- metrics$TP /
+  (metrics$TP + metrics$FP)
+
+metrics$recall <- metrics$TP /
+  (metrics$TP + metrics$FN)
+
+metrics$f1 <- 2 * (metrics$precision * metrics$recall) /
+  (metrics$precision + metrics$recall)
+
+metrics
+```
+
+## Data Interpretation
+
+Lets look at threshold 0.2 and 0.8
+
+There isn't automatically one "best" threshold. It depends on which type of mistake matters more.
+
+At 0.2, recall is highest. We're catching almost every actual positive, but we're accepting more false positives.
+
+At 0.8, precision is highest. When we predict positive, we're more confident it's actually positive, but a high threshold can make it easier to miss positives.
+
+Interestingly, 0.8 happens to have the highest accuracy and F1 for this particular dataset, but that doesn't mean 0.8 is universally the best threshold.
+
+## Threshold Use Cases
+
+In some cases a lower threshold would be preferable, in other cases, a higher one. For exmple, in terms of initial screening for a virus, we can have a lower threshold for symptoms in the patients to identify them. In this case, you would rather have more initial potential patients, than letting a few slip, that would spread the virus more.
