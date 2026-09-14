@@ -172,3 +172,8 @@ Interestingly, 0.8 happens to have the highest accuracy and F1 for this particul
 ## Threshold Use Cases
 
 In some cases a lower threshold would be preferable, in other cases, a higher one. For exmple, in terms of initial screening for a virus, we can have a lower threshold for symptoms in the patients to identify them. In this case, you would rather have more initial potential patients, than letting a few slip, that would spread the virus more.
+
+## Citation
+
+OpenAI. (2026). ChatGPT (Version 5.6) [Large language model]. 
+https://chat.openai.com. Accessed September 13, 2026
