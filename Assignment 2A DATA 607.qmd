@@ -1,0 +1,64 @@
+---
+title: "Assignment 2A DATA 607"
+format: html
+editor: visual
+---
+
+## Approach 2A
+
+For this assignment, I plan to collect 1–5 ratings for six movies from at least five people and store them in a SQLite database using separate tables for users, movies, and ratings. I will then load the data into R and explore online resources and LLM tools to determine appropriate methods for analyzing and summarizing the ratings. Since not everyone will have seen every movie, I will treat those ratings as missing values (`NA`) rather than assigning them a score.
+
+Install Postgres packages so I can use the sql data
+
+```{r}
+library(DBI)
+library(RPostgres)
+```
+
+```{r}
+packageVersion("DBI")
+packageVersion("RPostgres")
+```
+
+```{r}
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname = "movie_ratings",
+  host = "localhost",
+  port = 5432,
+  user = "postgres",
+  password = rstudioapi::askForPassword("PostgreSQL password")
+)
+```
+
+```{r}
+movie_ratings <- read.csv("movie_ratings_2A.csv")
+
+head(movie_ratings)
+```
+
+```{r}
+str(movie_ratings)
+summary(movie_ratings)
+
+aggregate(rating ~ movie_title,
+          data = movie_ratings,
+          FUN = mean)
+```
+
+```{r}
+rating_matrix <- xtabs(
+  rating ~ user_name + movie_title,
+  data = movie_ratings,
+  sparse = FALSE
+)
+
+rating_matrix <- reshape(
+  movie_ratings,
+  idvar = "user_name",
+  timevar = "movie_title",
+  direction = "wide"
+)
+
+rating_matrix
+```
